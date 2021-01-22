@@ -1,4 +1,4 @@
-version: '3.7'
+on: '3.7'
 
 services:
   traefik:
@@ -27,6 +27,19 @@ services:
       - "traefik.http.routers.traefik-ssl.service=api@internal"
       - "traefik.http.routers.traefik-ssl.middlewares=user-auth"
       - "traefik.http.middlewares.user-auth.basicAuth.users=${BASIC_AUTH}"
+  # Watchtower detects if any linked containers have an new image
+  # available, automatically updating & restarting them if needed.
+  watchtower:
+  # https://hub.docker.com/r/centurylink/watchtower/
+    image: v2tec/watchtower:latest
+  # https://github.com/v2tec/watchtower#options
+  # This schedule applies updates (if available) at midnight.
+    command: --cleanup --schedule "0 0 0 * * *"
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - "traefik.enable=false"
   db:
     image: mariadb
     container_name: wp-db
@@ -62,6 +75,34 @@ services:
       - "traefik.docker.network=frontend"
       - "traefik.http.routers.wordpress-ssl.entrypoints=sitesecure"
       - "traefik.http.routers.wordpress-ssl.rule=Host(`${WORDPRESS_DOMAINS}`)"
+
+  # Navigate to https://domain.com/phpmyadmin/ to manage your MySQL
+  # databases. (Don't forget the last forward slash.) Like the Traefik
+  # dashboard, this is behind a login prompt to help you stay secure.
+  wp-phpmyadmin:
+    # https://hub.docker.com/r/phpmyadmin/phpmyadmin/
+    image: phpmyadmin/phpmyadmin:latest
+    depends_on:
+      - db
+    restart: always
+    networks:
+      - wp-backend
+      - frontend
+    volumes:
+      # Install our own php.ini, which can be customized.
+      - ./php.ini:/usr/local/etc/php/php.ini
+    environment:
+      PMA_HOST: db
+      PMA_ABSOLUTE_URI: /phpmyadmin/
+      MYSQL_ROOT_PASSWORD: ${WORDPRESS_DB_ROOT_PASSWORD}
+    labels:
+      - "traefik.docker.network=frontend"
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=Host:${WORDPRESS_DOMAINS}; PathPrefixStrip:/phpmyadmin/"
+      - "traefik.port=80"
+      - "traefik.protocol=http"
+      # Remove the next line if you don't want a browser login prompt.
+      - "traefik.frontend.auth.basic=${BASIC_AUTH}"
 volumes:
   dbvol-wp:
     name: wp-dbvol-wp
