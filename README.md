@@ -1,6 +1,9 @@
 # wordpress-config-docker
 Docker compose to spin up wordpress with latest traefik
 
+Prerequisite:
+
+A record for domain.com and lb.domain.com pointing to public ip of server.
 
 
 1) Download and Execute the script wordpress.sh
