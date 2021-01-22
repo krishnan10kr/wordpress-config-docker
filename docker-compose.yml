@@ -98,7 +98,7 @@ services:
     labels:
       - "traefik.docker.network=frontend"
       - "traefik.enable=true"
-      - "traefik.frontend.rule=Host:${WORDPRESS_DOMAINS}; PathPrefixStrip:/phpmyadmin/"
+      - "traefik.frontend.rule=Host:(`${WORDPRESS_DOMAINS}`); PathPrefixStrip:/phpmyadmin/"
       - "traefik.port=80"
       - "traefik.protocol=http"
       # Remove the next line if you don't want a browser login prompt.
