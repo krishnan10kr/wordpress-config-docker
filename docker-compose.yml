@@ -1,0 +1,73 @@
+version: '3.7'
+
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./files/traefik.yml:/traefik.yml:ro
+      - ./files/acme.json:/acme.json
+      #  folder containing dynamic configuration yml
+      - ./files/config:/config
+    networks:
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=frontend"
+      - "traefik.http.routers.traefik-ssl.entrypoints=sitesecure"
+      - "traefik.http.routers.traefik-ssl.rule=Host(`${TRAEFIK_DOMAINS}`)"
+      - "traefik.http.routers.traefik-ssl.service=api@internal"
+      - "traefik.http.routers.traefik-ssl.middlewares=user-auth"
+      - "traefik.http.middlewares.user-auth.basicAuth.users=${BASIC_AUTH}"
+  db:
+    image: mariadb
+    container_name: wp-db
+    volumes:
+      - dbvol-wp:/var/lib/mysql
+    networks:
+      - wp-backend
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${WORDPRESS_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${WORDPRESS_DB_NAME}
+      MYSQL_USER: ${WORDPRESS_DB_USER}
+      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:latest
+    container_name: wordpress
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+    volumes:
+      - ./vol-wp-data:/var/www/html/wp-content
+    networks:
+      - frontend
+      - wp-backend
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=frontend"
+      - "traefik.http.routers.wordpress-ssl.entrypoints=sitesecure"
+      - "traefik.http.routers.wordpress-ssl.rule=Host(`${WORDPRESS_DOMAINS}`)"
+volumes:
+  dbvol-wp:
+    name: wp-dbvol-wp
+
+networks:
+  frontend:
+    external: true
+  wp-backend:
+    name: wp-backend
