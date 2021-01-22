@@ -26,8 +26,8 @@ curl -fsSL https://raw.githubusercontent.com/krishnan10kr/wordpress-config-docke
 
 read -p "Enter wordpress domain name: " website
 read -p "Enter email where ssl expiration alerts should go: " acmemail
-sed -i -e "s|admin@youradmin|$acmemail|" /root/compose/files/traefik.yml
-sed -i -e "s|^TRAEFIK_DOMAINS=.*|TRAEFIK_DOMAINS=`echo $website`|" /root/compose/.env
+sed -i -e "s|"admin@yourdomain"|$acmemail|g" /root/compose/files/traefik.yml
+sed -i -e "s|^TRAEFIK_DOMAINS=.*|TRAEFIK_DOMAINS=lb.`echo $website`|" /root/compose/.env
 sed -i -e "s|^WORDPRESS_DOMAINS=.*|WORDPRESS_DOMAINS=`echo $website`|" /root/compose/.env
 sed -i -e "s|^WORDPRESS_DB_ROOT_PASSWORD=.*|WORDPRESS_DB_ROOT_PASSWORD=`cat /dev/urandom | tr -dc '[:alnum:]' | head -c14`|" /root/compose/.env
 sed -i -e "s|^WORDPRESS_DB_PASSWORD=.*|WORDPRESS_DB_PASSWORD=`cat /dev/urandom | tr -dc '[:alnum:]' | head -c14`|" /root/compose/.env
@@ -43,8 +43,8 @@ sed -i -e "s|^BASIC_AUTH=.*|BASIC_AUTH=$BASIC_AUTH|" /root/compose/.env
 
 
 ## file for traefik to store keys and certs
-touch /root/compose/acme.json
-chmod 0600 /root/compose/acme.json
+touch /root/compose/files/acme.json
+chmod 600 /root/compose/files/acme.json
 
 ## creating public network
 docker network create frontend
