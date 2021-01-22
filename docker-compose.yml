@@ -76,34 +76,6 @@ services:
       - "traefik.http.routers.wordpress-ssl.entrypoints=sitesecure"
       - "traefik.http.routers.wordpress-ssl.rule=Host(`${WORDPRESS_DOMAINS}`)"
 
-  # Navigate to https://domain.com/phpmyadmin/ to manage your MySQL
-  # databases. (Don't forget the last forward slash.) Like the Traefik
-  # dashboard, this is behind a login prompt to help you stay secure.
-  wp-phpmyadmin:
-    # https://hub.docker.com/r/phpmyadmin/phpmyadmin/
-    image: phpmyadmin/phpmyadmin:latest
-    depends_on:
-      - db
-    restart: always
-    networks:
-      - wp-backend
-      - frontend
-    volumes:
-      # Install our own php.ini, which can be customized.
-      - ./php.ini:/usr/local/etc/php/php.ini
-    environment:
-      PMA_HOST: db
-      PMA_ABSOLUTE_URI: /phpmyadmin/
-      MYSQL_ROOT_PASSWORD: ${WORDPRESS_DB_ROOT_PASSWORD}
-    labels:
-      - "traefik.docker.network=frontend"
-      - "traefik.enable=true"
-      - "traefik.http.routes.phpmyadmin-ssl.rule=Host:(`${TRAEFIK_DOMAINS}`); PathPrefixStrip:/phpmyadmin/"
-      - "traefik.port=80"
-      - "traefik.protocol=http"
-      # Remove the next line if you don't want a browser login prompt.
-      - "traefik.http.routers.phpmyadmin-ssl.middlewares=user-auth"
-      - "traefik.http.middlewares.user-auth.basicAuth.users=${BASIC_AUTH}"
       
 volumes:
   dbvol-wp:
