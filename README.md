@@ -27,7 +27,6 @@ Containers:
 wordpress  - wordpress php files
 traefik  - Load balancer . You can access via https://lb.domain.com/(replace domain.com with your actual website name) . Logins in /root/compose/.env
 wp-db -- Wordpress db
-compose_wp-phpmyadmin_1 - Phpmyadmin . You can access via https://domain.com/phpmyadmin/ (replace domain.com with your actual website name) . Logins in /root/compose/.env 
 compose_watchtower_1
 ```
 
